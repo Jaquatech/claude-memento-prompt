@@ -34,8 +34,8 @@ Final answer written from mementos only.
 
 Claude Desktop no longer has a plain "Custom Instructions" field. Use one of:
 
-**A — Install the `.skill` file (Claude Desktop / Claude Code)**
-Download [`memento.skill`](memento.skill) from this repo, then in Claude Desktop:
+**A — Install the `.plugin` file (Claude Desktop)**
+Download [`memento.plugin`](memento.plugin) from this repo, then in Claude Desktop:
 `Customize → Install plugin` → select the file.
 The skill is immediately active in all conversations.
 
