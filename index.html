@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memento Prompting — Block-and-Summarize for Claude</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --surface: #131316;
+      --border: #222228;
+      --accent: #c8f060;
+      --accent2: #60c8f0;
+      --muted: #5a5a6a;
+      --text: #e8e8ee;
+      --text-dim: #9090a0;
+      --block: #1a1a20;
+      --code-bg: #0a0a0c;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.6;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      background: rgba(13,13,15,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      color: #0d0d0f;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    .header-title span { color: var(--accent); }
+
+    .gh-link {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 13px;
+      font-family: 'DM Mono', monospace;
+      transition: color 0.2s;
+    }
+    .gh-link:hover { color: var(--accent); }
+    .gh-link svg { width: 18px; height: 18px; }
+
+    main {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 5rem 2rem 8rem;
+    }
+
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.2rem;
+    }
+
+    h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      color: var(--text);
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .lead {
+      font-size: 1.1rem;
+      color: var(--text-dim);
+      max-width: 600px;
+      margin-bottom: 3.5rem;
+      line-height: 1.8;
+    }
+
+    .lead a {
+      color: var(--accent2);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(96,200,240,0.3);
+      transition: border-color 0.2s;
+    }
+    .lead a:hover { border-color: var(--accent2); }
+
+    /* Divider */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 3rem 0;
+    }
+
+    h2 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.7rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    p { color: var(--text-dim); margin-bottom: 1rem; }
+    p strong { color: var(--text); font-weight: 600; }
+
+    /* Block diagram */
+    .block-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 2rem 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .bd-row {
+      display: flex;
+      align-items: stretch;
+    }
+
+    .bd-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      padding: 1rem 0.6rem;
+      color: var(--muted);
+      border-right: 1px solid var(--border);
+      min-width: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bd-content {
+      padding: 1rem 1.2rem;
+      flex: 1;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    .bd-row.think { background: #13130f; }
+    .bd-row.think .bd-label { color: #908060; border-color: #2a2a1a; }
+    .bd-row.think .bd-content { color: #c0b888; }
+
+    .bd-row.block { background: #0f1318; }
+    .bd-row.block .bd-label { color: #4a7a9a; border-color: #1a2530; }
+    .bd-row.block .bd-content { color: #88b8d0; }
+
+    .bd-row.summary { background: #0f1a10; }
+    .bd-row.summary .bd-label { color: #5a9a5a; border-color: #1a301a; }
+    .bd-row.summary .bd-content { color: #88c888; font-style: italic; }
+
+    .bd-row.evict {
+      background: rgba(255,60,60,0.04);
+      border-top: 1px dashed rgba(255,60,60,0.2);
+    }
+    .bd-row.evict .bd-label { color: #7a4040; border-color: #3a1a1a; }
+    .bd-row.evict .bd-content { color: var(--muted); font-size: 0.8rem; font-style: italic; }
+
+    .bd-sep {
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* How it works steps */
+    .steps {
+      display: grid;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 2rem 0;
+    }
+
+    .step {
+      background: var(--surface);
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      gap: 1.2rem;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      background: rgba(200,240,96,0.08);
+      border: 1px solid rgba(200,240,96,0.2);
+      border-radius: 4px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-text { color: var(--text-dim); font-size: 0.93rem; }
+    .step-text strong { color: var(--text); }
+
+    /* The prompt box */
+    .prompt-card {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 2rem 0;
+    }
+
+    .prompt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .prompt-header-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .copy-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      background: rgba(200,240,96,0.08);
+      border: 1px solid rgba(200,240,96,0.25);
+      border-radius: 4px;
+      padding: 0.3rem 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.05em;
+    }
+    .copy-btn:hover {
+      background: rgba(200,240,96,0.16);
+      border-color: rgba(200,240,96,0.5);
+    }
+    .copy-btn.copied {
+      color: var(--accent2);
+      border-color: rgba(96,200,240,0.4);
+      background: rgba(96,200,240,0.08);
+    }
+
+    .prompt-body {
+      padding: 1.4rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.75;
+      color: #9090a8;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .prompt-body .kw { color: var(--accent); }
+    .prompt-body .tag { color: var(--accent2); }
+    .prompt-body .comment { color: var(--muted); }
+    .prompt-body .val { color: #d0a060; }
+
+    /* Use cases */
+    .use-cases {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 2rem 0;
+    }
+
+    .use-case {
+      background: var(--surface);
+      padding: 1.2rem;
+    }
+
+    .use-case-icon {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .use-case h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      color: var(--text);
+    }
+
+    .use-case p {
+      font-size: 0.85rem;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* FAQ */
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 1.4rem 0;
+    }
+    .faq-item:first-child { padding-top: 0; }
+    .faq-item:last-child { border-bottom: none; }
+
+    .faq-q {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .faq-a { font-size: 0.9rem; color: var(--text-dim); margin: 0; }
+    .faq-a a { color: var(--accent2); text-decoration: none; }
+
+    /* Credits */
+    .credit-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.4rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .credit-box a { color: var(--accent2); text-decoration: none; }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 600px) {
+      .use-cases { grid-template-columns: 1fr; }
+      h1 { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">M</div>
+  <span class="header-title">memento<span>-prompt</span></span>
+  <a href="https://github.com/microsoft/memento" class="gh-link" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
+    microsoft/memento
+  </a>
+</header>
+
+<main>
+
+  <p class="eyebrow">Prompt Engineering · Inspired by Microsoft Research</p>
+  <h1>Reasoning in <em>blocks</em>,<br>not infinite chains.</h1>
+  <p class="lead">
+    A system prompt for Claude Desktop that applies the core insight of
+    <a href="https://github.com/microsoft/memento" target="_blank">Microsoft's Memento</a>
+    — split long reasoning into discrete blocks, compress each block into a
+    <em>memento</em> (a compact summary), and continue from there.
+    No model fine-tuning required.
+  </p>
+
+  <hr class="divider">
+
+  <h2>What is Memento?</h2>
+  <p>
+    <strong>Memento</strong> is a Microsoft Research technique for extending the effective reasoning length
+    of large language models. Instead of one unbounded chain-of-thought that consumes the entire context window,
+    reasoning is divided into blocks. After each block the model writes a short summary — the <em>memento</em> —
+    and the full block content is then evicted from memory. The model continues from the summary alone.
+  </p>
+  <p>
+    The original paper implements this with special tokens and KV-cache masking in vLLM.
+    This page adapts the same <strong>conceptual structure</strong> into a plain system prompt
+    that any Claude Desktop user can drop in today.
+  </p>
+
+  <div class="block-diagram">
+    <div class="bd-row think">
+      <div class="bd-label">think</div>
+      <div class="bd-content">Global reasoning wrapper — the whole problem sits here.</div>
+    </div>
+    <div class="bd-sep"></div>
+    <div class="bd-row block">
+      <div class="bd-label">block 1</div>
+      <div class="bd-content">Reason deeply about the first sub-problem. Full detail, no shortcuts.</div>
+    </div>
+    <div class="bd-sep"></div>
+    <div class="bd-row summary">
+      <div class="bd-label">memento</div>
+      <div class="bd-content">Compress block 1 into a tight summary. This is all that carries forward.</div>
+    </div>
+    <div class="bd-sep"></div>
+    <div class="bd-row evict">
+      <div class="bd-label">evicted</div>
+      <div class="bd-content">Block 1 detail is dropped. Only the memento persists in working memory.</div>
+    </div>
+    <div class="bd-sep"></div>
+    <div class="bd-row block">
+      <div class="bd-label">block 2</div>
+      <div class="bd-content">Reason about the next sub-problem, grounded in the memento above.</div>
+    </div>
+    <div class="bd-sep"></div>
+    <div class="bd-row summary">
+      <div class="bd-label">memento</div>
+      <div class="bd-content">Compress block 2. Carry forward both mementos into block 3.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>How the prompt works</h2>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text"><strong>Decompose.</strong> Before answering, Claude identifies distinct sub-problems or reasoning phases in the task.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text"><strong>Block.</strong> Each sub-problem gets a dedicated reasoning block, tagged with <code>&lt;block&gt;</code>. Full detail lives here.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text"><strong>Memento.</strong> After each block, Claude writes a &lt;memento&gt; — a compressed, information-dense summary of conclusions reached.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text"><strong>Continue from summary.</strong> The next block is grounded only on accumulated mementos, not the full prior block text.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-text"><strong>Answer.</strong> The final response is written from mementos only — concise, structured, and free of reasoning noise.</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>The system prompt</h2>
+  <p>Copy this into Claude Desktop → Settings → Custom Instructions (or your project's system prompt field).</p>
+
+  <div class="prompt-card">
+    <div class="prompt-header">
+      <span class="prompt-header-title">system_prompt.txt — Memento-Style Reasoning</span>
+      <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">Copy</button>
+    </div>
+    <div class="prompt-body" id="promptText"><span class="comment"># Memento-Style Reasoning
+# Inspired by Microsoft Research: https://github.com/microsoft/memento
+# Adapt the block structure to the complexity of each task.
+</span>
+<span class="kw">You are a careful, structured reasoner.</span> For any non-trivial task, apply the following block-and-memento reasoning pattern before producing your final answer.
+
+<span class="tag">## Reasoning structure</span>
+
+<span class="kw">Step 1 — Decompose</span>
+Identify the distinct sub-problems or reasoning phases in the request. Name them briefly.
+
+<span class="kw">Step 2 — Block reasoning</span>
+For each sub-problem, open a reasoning block:
+
+  <span class="tag">&lt;block id="N" topic="..."&gt;</span>
+  Reason fully about this sub-problem. Be thorough here — this is your working space.
+  Do not constrain yourself.
+  <span class="tag">&lt;/block&gt;</span>
+
+  <span class="tag">&lt;memento id="N"&gt;</span>
+  Write a dense, information-rich summary of what you concluded in block N.
+  This is the ONLY information carried forward into subsequent blocks.
+  Every important finding, decision, or constraint must survive in this summary.
+  Discard all reasoning scaffolding — keep only conclusions.
+  <span class="tag">&lt;/memento&gt;</span>
+
+<span class="kw">Step 3 — Accumulate</span>
+Each new block reads from ALL prior mementos, not from prior block content.
+Treat the memento stack as your working memory. Keep it trim and precise.
+
+<span class="kw">Step 4 — Final answer</span>
+After all blocks are complete, write your final response.
+Base it solely on the memento stack. The answer must be clean, direct, and free of reasoning noise.
+<span class="comment">
+## Scale to complexity
+- Simple factual questions: skip blocks entirely, answer directly.
+- Single-phase tasks: one block + one memento + answer.
+- Complex multi-step tasks: multiple blocks, one memento each.
+- Do not mechanically apply blocks to trivial requests.
+
+## Format note
+The &lt;block&gt; and &lt;memento&gt; tags may be shown to the user or collapsed
+depending on context. Keep block reasoning honest — do not perform reasoning
+for show. Mementos must be genuinely compressed, not a copy of the block.</span></div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>Good use cases</h2>
+
+  <div class="use-cases">
+    <div class="use-case">
+      <div class="use-case-icon">🔀</div>
+      <h3>Integration mapping</h3>
+      <p>Multi-field schema mappings across systems — each block handles a field family.</p>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">🐛</div>
+      <h3>Long debugging sessions</h3>
+      <p>Isolate hypotheses per block so conclusions don't bleed into each other.</p>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">📐</div>
+      <h3>Architecture decisions</h3>
+      <p>Compare approaches in separate blocks, then synthesize from mementos alone.</p>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">📝</div>
+      <h3>Long document drafting</h3>
+      <p>Outline, section logic, and tone checked in distinct blocks before writing.</p>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">⚖️</div>
+      <h3>Trade-off analysis</h3>
+      <p>Each option reasoned independently, then compared only via compressed summaries.</p>
+    </div>
+    <div class="use-case">
+      <div class="use-case-icon">🧪</div>
+      <h3>Code review / refactoring</h3>
+      <p>Logic, correctness, performance, and style each get a block before verdict.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>FAQ</h2>
+
+  <div class="faq-item">
+    <p class="faq-q">Does this work like the actual Memento paper?</p>
+    <p class="faq-a">Structurally yes, mechanically no. The paper evicts block tokens from the KV cache using a modified vLLM engine and specially trained models. This prompt approximates the same discipline through instruction — Claude voluntarily treats mementos as its working memory. You get the cognitive benefit without needing to self-host a fine-tuned model.</p>
+  </div>
+
+  <div class="faq-item">
+    <p class="faq-q">Will Claude always follow this structure?</p>
+    <p class="faq-a">For complex tasks, yes. The prompt includes an explicit scaling instruction: trivial questions skip blocks entirely. Claude is instructed not to apply the pattern mechanically where it adds no value.</p>
+  </div>
+
+  <div class="faq-item">
+    <p class="faq-q">Should I hide the block/memento tags from users?</p>
+    <p class="faq-a">In Claude Desktop for personal use, leaving them visible is fine — they act as a legible audit trail of reasoning. In an API-based product you'd typically post-process the output to strip them.</p>
+  </div>
+
+  <div class="faq-item">
+    <p class="faq-q">Can I combine this with other system prompt instructions?</p>
+    <p class="faq-a">Yes. Place your domain-specific instructions before or after this block. The reasoning structure is intentionally self-contained.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="credit-box">
+    <strong style="color: var(--text);">Credits & references</strong><br><br>
+    The block-and-summary reasoning architecture is from
+    <a href="https://github.com/microsoft/memento" target="_blank">Microsoft Memento</a>
+    (microsoft/memento, MIT License). The original work introduces special tokens
+    <code>&lt;|block_start|&gt;</code>, <code>&lt;|block_end|&gt;</code>, <code>&lt;|summary_start|&gt;</code>, <code>&lt;|summary_end|&gt;</code>
+    and KV-cache compaction for use with fine-tuned models on vLLM.<br><br>
+    This page adapts that conceptual architecture into a plain-text system prompt requiring no model changes.
+    The prompt itself is released into the public domain (CC0).
+  </div>
+
+</main>
+
+<footer>
+  <a href="https://github.com/microsoft/memento" target="_blank">microsoft/memento</a>
+  &nbsp;·&nbsp;
+  Prompt adaptation: public domain (CC0)
+  &nbsp;·&nbsp;
+  Not affiliated with Microsoft
+</footer>
+
+<script>
+  const rawPrompt = `# Memento-Style Reasoning
+# Inspired by Microsoft Research: https://github.com/microsoft/memento
+# Adapt the block structure to the complexity of each task.
+
+You are a careful, structured reasoner. For any non-trivial task, apply the following block-and-memento reasoning pattern before producing your final answer.
+
+## Reasoning structure
+
+Step 1 — Decompose
+Identify the distinct sub-problems or reasoning phases in the request. Name them briefly.
+
+Step 2 — Block reasoning
+For each sub-problem, open a reasoning block:
+
+  <block id="N" topic="...">
+  Reason fully about this sub-problem. Be thorough here — this is your working space.
+  Do not constrain yourself.
+  </block>
+
+  <memento id="N">
+  Write a dense, information-rich summary of what you concluded in block N.
+  This is the ONLY information carried forward into subsequent blocks.
+  Every important finding, decision, or constraint must survive in this summary.
+  Discard all reasoning scaffolding — keep only conclusions.
+  </memento>
+
+Step 3 — Accumulate
+Each new block reads from ALL prior mementos, not from prior block content.
+Treat the memento stack as your working memory. Keep it trim and precise.
+
+Step 4 — Final answer
+After all blocks are complete, write your final response.
+Base it solely on the memento stack. The answer must be clean, direct, and free of reasoning noise.
+
+## Scale to complexity
+- Simple factual questions: skip blocks entirely, answer directly.
+- Single-phase tasks: one block + one memento + answer.
+- Complex multi-step tasks: multiple blocks, one memento each.
+- Do not mechanically apply blocks to trivial requests.
+
+## Format note
+The <block> and <memento> tags may be shown to the user or collapsed
+depending on context. Keep block reasoning honest — do not perform reasoning
+for show. Mementos must be genuinely compressed, not a copy of the block.`;
+
+  function copyPrompt() {
+    navigator.clipboard.writeText(rawPrompt).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+</script>
+
+</body>
+</html>
