@@ -1,15 +1,5 @@
 ---
-name: memento
-description: >
-  Apply this skill for ANY non-trivial task — complex questions, debugging sessions,
-  architecture decisions, trade-off analysis, code review, schema mapping, document
-  drafting, or any multi-step reasoning problem. When in doubt, use it. The skill
-  teaches structured block-and-memento reasoning: break the problem into isolated
-  reasoning blocks, compress each into a dense summary (memento), and build the
-  final answer from summaries only. This prevents reasoning bleed-through and keeps
-  context lean on long problems. Use it proactively; skip only for clearly trivial
-  one-liner questions.
-version: 1.0.0
+description: "Apply this skill for ANY non-trivial task: complex questions, debugging, architecture decisions, trade-off analysis, code review, schema mapping, or document drafting. Teaches structured block-and-memento reasoning — break the problem into isolated blocks, compress each into a dense summary (memento), build the final answer from summaries only. Use proactively; skip only for trivial one-liners."
 ---
 
 # Memento-Style Reasoning
