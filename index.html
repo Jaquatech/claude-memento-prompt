@@ -406,9 +406,9 @@
 <header>
   <div class="logo-mark">M</div>
   <span class="header-title">memento<span>-prompt</span></span>
-  <a href="https://github.com/microsoft/memento" class="gh-link" target="_blank" rel="noopener">
+  <a href="https://github.com/Jaquatech/claude-memento-prompt" class="gh-link" target="_blank" rel="noopener">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
-    microsoft/memento
+    Jaquatech/claude-memento-prompt
   </a>
 </header>
 
@@ -501,7 +501,21 @@
   <hr class="divider">
 
   <h2>The system prompt</h2>
-  <p>Copy this into Claude Desktop → Settings → Custom Instructions (or your project's system prompt field).</p>
+  <p>Claude Desktop no longer has a plain "Custom Instructions" field — use one of these methods:</p>
+  <div class="steps" style="margin-bottom:1.5rem">
+    <div class="step">
+      <div class="step-num">A</div>
+      <div class="step-text"><strong>Claude Desktop — Plugin.</strong> Customize → Create plugin → Create with Claude. Paste the prompt as the skill/plugin instruction content.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">B</div>
+      <div class="step-text"><strong>Claude.ai — Project instructions.</strong> Create a Project, open its instructions field, paste the prompt. Every conversation in that project inherits it.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">C</div>
+      <div class="step-text"><strong>API.</strong> Pass the text as the <code>system</code> parameter in any Anthropic API call.</div>
+    </div>
+  </div>
 
   <div class="prompt-card">
     <div class="prompt-header">
@@ -624,18 +638,20 @@ for show. Mementos must be genuinely compressed, not a copy of the block.</span>
     (microsoft/memento, MIT License). The original work introduces special tokens
     <code>&lt;|block_start|&gt;</code>, <code>&lt;|block_end|&gt;</code>, <code>&lt;|summary_start|&gt;</code>, <code>&lt;|summary_end|&gt;</code>
     and KV-cache compaction for use with fine-tuned models on vLLM.<br><br>
-    This page adapts that conceptual architecture into a plain-text system prompt requiring no model changes.
-    The prompt itself is released into the public domain (CC0).
+    This prompt adaptation is by <a href="https://github.com/Jaquatech" target="_blank">Jaquatech (Jan Romppanen)</a>
+    — translating the conceptual architecture into a plain-text system prompt requiring no model changes or infrastructure.
+    Source: <a href="https://github.com/Jaquatech/claude-memento-prompt" target="_blank">Jaquatech/claude-memento-prompt</a>.
+    The prompt text is released into the public domain (CC0).
   </div>
 
 </main>
 
 <footer>
-  <a href="https://github.com/microsoft/memento" target="_blank">microsoft/memento</a>
+  <a href="https://github.com/Jaquatech/claude-memento-prompt" target="_blank">Jaquatech/claude-memento-prompt</a>
   &nbsp;·&nbsp;
   Prompt adaptation: public domain (CC0)
   &nbsp;·&nbsp;
-  Not affiliated with Microsoft
+  Research: <a href="https://github.com/microsoft/memento" target="_blank">microsoft/memento</a>
 </footer>
 
 <script>
