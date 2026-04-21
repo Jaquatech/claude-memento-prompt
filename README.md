@@ -39,9 +39,14 @@ Install directly via the Claude Code CLI:
 ```shell
 /plugin marketplace add Jaquatech/claude-memento-prompt
 /plugin install memento@jaquatech-memento
+/reload-plugins
 ```
 
-Then run `/reload-plugins`. The skill auto-triggers on complex tasks — no command needed.
+Then invoke it by passing your task as an argument:
+
+```shell
+/memento:memento What are the tradeoffs between PostgreSQL and MongoDB?
+```
 
 To test locally without installing: `claude --plugin-dir ./skill`
 
