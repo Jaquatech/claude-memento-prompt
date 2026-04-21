@@ -1,0 +1,25 @@
+{
+  "name": "jaquatech-memento",
+  "owner": {
+    "name": "Jaquatech / Jan Romppanen",
+    "email": ""
+  },
+  "metadata": {
+    "description": "Memento-style block-and-summary reasoning prompt for Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "memento",
+      "source": "./skill",
+      "description": "Applies Memento-style block-and-summary reasoning. Breaks complex tasks into isolated reasoning blocks, compresses each into a dense memento summary, and builds the final answer from summaries only.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Jaquatech / Jan Romppanen"
+      },
+      "homepage": "https://jaquatech.github.io/claude-memento-prompt/",
+      "repository": "https://github.com/Jaquatech/claude-memento-prompt",
+      "license": "CC0-1.0",
+      "keywords": ["reasoning", "structured thinking", "memento", "productivity"]
+    }
+  ]
+}

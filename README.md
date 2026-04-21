@@ -32,12 +32,18 @@ Final answer written from mementos only.
 
 ## How to use
 
-Claude Desktop no longer has a plain "Custom Instructions" field. Use one of:
+**A — Claude Code plugin (recommended)**
 
-**A — Install the `.plugin` file (Claude Desktop)**
-Download [`memento.plugin`](memento.plugin) from this repo, then in Claude Desktop:
-`Customize → Install plugin` → select the file.
-The skill is immediately active in all conversations.
+Install directly via the Claude Code CLI:
+
+```shell
+/plugin marketplace add Jaquatech/claude-memento-prompt
+/plugin install memento@jaquatech-memento
+```
+
+Then run `/reload-plugins`. The skill auto-triggers on complex tasks — no command needed.
+
+To test locally without installing: `claude --plugin-dir ./skill`
 
 **B — Claude Desktop — Create plugin manually**
 `Customize → Create plugin → Create with Claude`.
