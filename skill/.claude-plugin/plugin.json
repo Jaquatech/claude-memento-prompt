@@ -1,0 +1,7 @@
+{
+  "name": "memento",
+  "description": "Applies Memento-style block-and-summary reasoning for complex tasks. Breaks reasoning into isolated blocks, compresses each into a dense memento, and builds the final answer from summaries only — preventing reasoning bleed-through across sub-problems.",
+  "author": {
+    "name": "Jaquatech / Jan Romppanen"
+  }
+}

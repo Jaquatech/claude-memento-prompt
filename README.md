@@ -34,13 +34,19 @@ Final answer written from mementos only.
 
 Claude Desktop no longer has a plain "Custom Instructions" field. Use one of:
 
-**A — Claude Desktop plugin**
-Customize → Create plugin → Create with Claude. Paste the prompt as the plugin instruction content.
+**A — Install the `.skill` file (Claude Desktop / Claude Code)**
+Download [`memento.skill`](memento.skill) from this repo, then in Claude Desktop:
+`Customize → Install plugin` → select the file.
+The skill is immediately active in all conversations.
 
-**B — Claude.ai Project instructions**
+**B — Claude Desktop — Create plugin manually**
+`Customize → Create plugin → Create with Claude`.
+Paste the prompt text as the plugin instruction content.
+
+**C — Claude.ai Project instructions**
 Create a Project → open its instructions → paste the prompt. All conversations in that project inherit it.
 
-**C — API**
+**D — API**
 Pass the prompt text as the `system` parameter in any Anthropic API call.
 
 The full prompt text is on the [live page](https://jaquatech.github.io/claude-memento-prompt/) with a one-click copy button.
