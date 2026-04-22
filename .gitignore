@@ -1,0 +1,10 @@
+# Skill-creator eval workspace (temporary, not needed in repo)
+workspace/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# OS junk
+.DS_Store
+Thumbs.db

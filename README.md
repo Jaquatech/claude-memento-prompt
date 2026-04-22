@@ -32,9 +32,27 @@ Final answer written from mementos only.
 
 ## How to use
 
-**A — Claude Code plugin (recommended)**
+### Claude Desktop
 
-Install directly via the Claude Code CLI:
+**Simple path (works everywhere):**
+
+1. Open [jaquatech.github.io/claude-memento-prompt](https://jaquatech.github.io/claude-memento-prompt/) and click **Copy prompt**
+2. In Claude Desktop: **Customize → Create plugin → Create with Claude**
+3. Paste the prompt as the plugin instruction content and save
+
+The skill will be active for every new conversation. To use it in an existing conversation, start a fresh chat.
+
+Alternatively, use **Project instructions** for a specific project: open the project → instructions → paste the prompt.
+
+**Native skill file (Claude Desktop agent mode / Cowork):**
+
+If you have Claude Desktop's agent mode (Cowork) enabled, a pre-packaged `memento.skill` file is available at [`dist/memento.skill`](dist/memento.skill). This is the native skill archive format — import it through Claude Desktop's skill import UI (if available) or drop it into your local skills directory. Once installed, invoke it with `/memento` or let it auto-trigger on non-trivial tasks.
+
+---
+
+### Claude Code CLI
+
+Install from the marketplace in one command:
 
 ```shell
 /plugin marketplace add Jaquatech/claude-memento-prompt
@@ -42,22 +60,26 @@ Install directly via the Claude Code CLI:
 /reload-plugins
 ```
 
-Then invoke it by passing your task as an argument:
+Invoke explicitly:
 
 ```shell
 /memento:memento What are the tradeoffs between PostgreSQL and MongoDB?
 ```
 
+The skill also triggers automatically on any non-trivial task and whenever you say things like "think this through" or "reason carefully".
+
 To test locally without installing: `claude --plugin-dir ./skill`
 
-**B — Claude Desktop — Create plugin manually**
-`Customize → Create plugin → Create with Claude`.
-Paste the prompt text as the plugin instruction content.
+---
 
-**C — Claude.ai Project instructions**
+### Claude.ai Projects
+
 Create a Project → open its instructions → paste the prompt. All conversations in that project inherit it.
 
-**D — API**
+---
+
+### API
+
 Pass the prompt text as the `system` parameter in any Anthropic API call.
 
 The full prompt text is on the [live page](https://jaquatech.github.io/claude-memento-prompt/) with a one-click copy button.
